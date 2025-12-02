@@ -302,6 +302,22 @@
             } finally { refreshIcon.classList.remove('animate-spin'); }
         }
 
+        // --- FILTER FUNCTION (FIXED) ---
+        function filterData(searchTerm) {
+            const lowerTerm = safeStr(searchTerm).toLowerCase();
+            filteredData = alumniData.filter(item => 
+                safeStr(item.nama).toLowerCase().includes(lowerTerm) ||
+                safeStr(item.perusahaan).toLowerCase().includes(lowerTerm) ||
+                safeStr(item.provinsi).toLowerCase().includes(lowerTerm) ||
+                safeStr(item.kota).toLowerCase().includes(lowerTerm)
+            );
+            
+            renderList();
+            if (viewMode === 'map' && mapInstance) {
+                renderLeafletMarkers();
+            }
+        }
+
         function renderList() {
             const grid = document.getElementById('alumni-grid');
             grid.innerHTML = '';
