@@ -154,18 +154,22 @@
                 </div>
                 
                 <!-- Map Container -->
-                <div class="relative w-full flex-1 bg-blue-50/50 rounded-lg overflow-hidden border border-slate-100 shadow-inner">
-                    <!-- CHANGED: Use Wikimedia PNG thumbnail for better compatibility & reliability -->
+                <div class="relative w-full flex-1 bg-slate-200 rounded-lg overflow-hidden border border-slate-100 shadow-inner group-map">
+                    <!-- Text Fallback -->
+                    <div class="absolute inset-0 flex items-center justify-center text-slate-300 font-bold text-4xl select-none z-0">
+                        INDONESIA
+                    </div>
+                    
+                    <!-- SVG Map Asli (Lebih Stabil daripada thumbnail PNG) -->
                     <img 
-                        src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Indonesia_adm_location_map.svg/1024px-Indonesia_adm_location_map.svg.png" 
+                        src="https://upload.wikimedia.org/wikipedia/commons/b/bb/Indonesia_adm_location_map.svg" 
                         alt="Peta Indonesia" 
-                        class="absolute inset-0 w-full h-full object-cover opacity-60 mix-blend-multiply" 
+                        class="absolute inset-0 w-full h-full object-cover opacity-60 mix-blend-multiply z-0" 
                         style="object-position: center;"
-                        onerror="this.style.display='none'; alert('Gagal memuat peta. Coba refresh halaman.');"
                     >
                     
                     <!-- Map Dots Container -->
-                    <div id="map-dots-layer" class="absolute inset-0 w-full h-full"></div>
+                    <div id="map-dots-layer" class="absolute inset-0 w-full h-full z-10"></div>
                 </div>
                 <div class="mt-2 text-[10px] text-slate-400 text-center italic bg-slate-50 py-1 rounded">
                     *Posisi visual adalah estimasi koordinat dari nama Kota/Provinsi.
