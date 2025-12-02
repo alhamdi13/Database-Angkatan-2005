@@ -155,7 +155,14 @@
                 
                 <!-- Map Container -->
                 <div class="relative w-full flex-1 bg-blue-50/50 rounded-lg overflow-hidden border border-slate-100 shadow-inner">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/b/bb/Indonesia_adm_location_map.svg" alt="Peta Indonesia" class="absolute inset-0 w-full h-full object-cover opacity-60 mix-blend-multiply" style="object-position: center;">
+                    <!-- CHANGED: Use Wikimedia PNG thumbnail for better compatibility & reliability -->
+                    <img 
+                        src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Indonesia_adm_location_map.svg/1024px-Indonesia_adm_location_map.svg.png" 
+                        alt="Peta Indonesia" 
+                        class="absolute inset-0 w-full h-full object-cover opacity-60 mix-blend-multiply" 
+                        style="object-position: center;"
+                        onerror="this.style.display='none'; alert('Gagal memuat peta. Coba refresh halaman.');"
+                    >
                     
                     <!-- Map Dots Container -->
                     <div id="map-dots-layer" class="absolute inset-0 w-full h-full"></div>
