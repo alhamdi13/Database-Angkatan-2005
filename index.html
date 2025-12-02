@@ -1,0 +1,589 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import { Search, MapPin, Briefcase, Phone, Mail, User, Building2, ChevronRight, BarChart3, Users, Globe, X, Loader2, RefreshCw, Map as MapIcon, List, Filter } from 'lucide-react';
+
+// --- KONFIGURASI UTAMA ---
+const API_URL = "https://script.google.com/macros/s/AKfycbwqI5gOYqGW3rJd1fbMXbWKrnYoxlZ7Clhy5GT-7Z1Co8UuSf97MzE-B25yG8x_VlEn/exec";
+
+// --- DATABASE KOORDINAT KOTA (Mapping Manual untuk Visualisasi) ---
+const CITY_COORDINATES = {
+  // Kalimantan
+  "balikpapan": { lat: -1.2379, lng: 116.8529 },
+  "samarinda": { lat: -0.5022, lng: 117.1536 },
+  "sangatta": { lat: 0.5022, lng: 117.5359 },
+  "kutai timur": { lat: 0.6, lng: 117.6 },
+  "tanjung": { lat: -2.1752, lng: 115.3934 },
+  "tabalong": { lat: -2.0, lng: 115.4 },
+  "banjarmasin": { lat: -3.3194, lng: 114.5908 },
+  "pontianak": { lat: -0.0263, lng: 109.3425 },
+  "palangkaraya": { lat: -2.2136, lng: 113.9108 },
+  "ketapang": { lat: -1.85, lng: 109.97 },
+  
+  // Jawa
+  "jakarta": { lat: -6.2088, lng: 106.8456 },
+  "tangerang": { lat: -6.1702, lng: 106.6403 },
+  "bogor": { lat: -6.5971, lng: 106.8060 },
+  "bekasi": { lat: -6.2383, lng: 106.9756 },
+  "bandung": { lat: -6.9175, lng: 107.6191 },
+  "yogyakarta": { lat: -7.7956, lng: 110.3695 },
+  "sleman": { lat: -7.7, lng: 110.35 },
+  "surabaya": { lat: -7.2575, lng: 112.7521 },
+  "gresik": { lat: -7.15, lng: 112.65 },
+  
+  // Sumatera
+  "palembang": { lat: -2.9761, lng: 104.7754 },
+  "tanjung enim": { lat: -3.75, lng: 103.8 },
+  "lahat": { lat: -3.80, lng: 103.54 },
+  "pangkalpinang": { lat: -2.13, lng: 106.11 },
+  "bangka": { lat: -1.9, lng: 106.0 },
+  "medan": { lat: 3.5952, lng: 98.6722 },
+  "pekanbaru": { lat: 0.5071, lng: 101.4478 },
+  "padang": { lat: -0.9471, lng: 100.4172 },
+  
+  // Sulawesi & Maluku
+  "makassar": { lat: -5.1477, lng: 119.4328 },
+  "manado": { lat: 1.4748, lng: 124.8421 },
+  "kendari": { lat: -3.9973, lng: 122.5151 },
+  "morowali": { lat: -2.6, lng: 121.9 },
+  "palu": { lat: -0.9010, lng: 119.8707 },
+  
+  // Nusa Tenggara & Papua
+  "sumbawa": { lat: -8.5, lng: 117.4 },
+  "mataram": { lat: -8.5833, lng: 116.1167 },
+  "timika": { lat: -4.5446, lng: 136.8874 },
+  "jayapura": { lat: -2.5, lng: 140.7 },
+  "sorong": { lat: -0.87, lng: 131.25 },
+};
+
+// --- HELPER FUNCTIONS ---
+const formatWhatsApp = (phone) => {
+  if (!phone) return "#";
+  let cleanPhone = phone.toString().replace(/[^0-9]/g, '');
+  if (cleanPhone.startsWith('0')) {
+    cleanPhone = '62' + cleanPhone.slice(1);
+  }
+  return `https://wa.me/${cleanPhone}`;
+};
+
+const getInitials = (name) => {
+  if (!name) return "NN";
+  return name.toString().split(' ').map((n) => n[0]).join('').substring(0, 2).toUpperCase();
+};
+
+const getCoordinates = (city, province) => {
+  const cleanCity = city?.toString().toLowerCase().trim();
+  const cleanProv = province?.toString().toLowerCase().trim();
+  
+  for (const [key, value] of Object.entries(CITY_COORDINATES)) {
+    if (cleanCity && cleanCity.includes(key)) return value;
+  }
+  
+  // Fallback ke provinsi umum
+  if (cleanProv?.includes('kalimantan timur')) return { lat: 0.5, lng: 116.5 };
+  if (cleanProv?.includes('kalimantan selatan')) return { lat: -2.5, lng: 115.5 };
+  if (cleanProv?.includes('jawa barat')) return { lat: -6.9, lng: 107.6 };
+  if (cleanProv?.includes('jawa timur')) return { lat: -7.5, lng: 112.5 };
+  if (cleanProv?.includes('sumatera selatan')) return { lat: -3.3, lng: 104.0 };
+  if (cleanProv?.includes('papua')) return { lat: -4.0, lng: 138.0 };
+  
+  return null;
+};
+
+// --- COMPONENTS ---
+
+const IndoMap = ({ data }) => {
+  const [filterArea, setFilterArea] = useState('all');
+
+  // 1. Group data by coordinates
+  const groupedLocations = useMemo(() => {
+    const locations = {};
+    data.forEach(person => {
+      const coords = getCoordinates(person.kota, person.provinsi);
+      if (coords) {
+        const key = `${coords.lat},${coords.lng}`;
+        if (!locations[key]) {
+          locations[key] = { ...coords, count: 0, people: [], city: person.kota || person.provinsi };
+        }
+        locations[key].count += 1;
+        locations[key].people.push(person);
+      }
+    });
+    return Object.values(locations);
+  }, [data]);
+
+  // 2. Get unique areas for filter dropdown
+  const availableAreas = useMemo(() => {
+    const areas = new Set(groupedLocations.map(loc => loc.city));
+    return Array.from(areas).sort();
+  }, [groupedLocations]);
+
+  // 3. Filter display based on selection
+  const visibleLocations = groupedLocations.filter(loc => 
+    filterArea === 'all' || loc.city === filterArea
+  );
+
+  const getPos = (lat, lng) => {
+    const MIN_LONG = 95.0; const MAX_LONG = 141.0;
+    const MIN_LAT = -11.0; const MAX_LAT = 6.0;
+    const x = ((lng - MIN_LONG) / (MAX_LONG - MIN_LONG)) * 100;
+    const y = ((MAX_LAT - lat) / (MAX_LAT - MIN_LAT)) * 100;
+    return { left: `${x}%`, top: `${y}%` };
+  };
+
+  return (
+    <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 overflow-hidden relative min-h-[500px] flex flex-col">
+      
+      {/* Map Header & Controls */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4 z-20 relative">
+        <div className="bg-white/90 p-2 rounded-lg shadow-sm border border-slate-100">
+          <p className="font-bold text-slate-800 text-sm">Peta Sebaran Alumni</p>
+          <p className="text-xs text-slate-500">
+            {visibleLocations.length} titik lokasi {filterArea !== 'all' ? 'terpilih' : 'total'}
+          </p>
+        </div>
+
+        {/* Filter Dropdown */}
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
+            <Filter className="h-4 w-4 text-slate-400" />
+          </div>
+          <select 
+            value={filterArea}
+            onChange={(e) => setFilterArea(e.target.value)}
+            className="pl-8 pr-8 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-yellow-500 shadow-sm appearance-none cursor-pointer hover:bg-slate-50 transition-colors min-w-[200px]"
+          >
+            <option value="all">Semua Lokasi</option>
+            <option disabled>──────────</option>
+            {availableAreas.map((area, idx) => (
+              <option key={idx} value={area}>{area}</option>
+            ))}
+          </select>
+          <div className="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none">
+             <ChevronRight className="h-4 w-4 text-slate-400 rotate-90" />
+          </div>
+        </div>
+      </div>
+      
+      {/* Map Container */}
+      <div className="relative w-full flex-1 bg-blue-50/50 rounded-lg overflow-hidden border border-slate-100 shadow-inner">
+        <img 
+          src="https://upload.wikimedia.org/wikipedia/commons/b/bb/Indonesia_adm_location_map.svg" 
+          alt="Peta Indonesia"
+          className="absolute inset-0 w-full h-full object-cover opacity-60 mix-blend-multiply"
+        />
+
+        {visibleLocations.map((loc, idx) => {
+          const pos = getPos(loc.lat, loc.lng);
+          const size = Math.min(50, 24 + (loc.count * 4)); 
+          const isSelected = filterArea === loc.city;
+          
+          return (
+            <div 
+              key={idx}
+              className={`absolute group flex items-center justify-center cursor-pointer transition-all duration-500 ${isSelected ? 'z-30 scale-110' : 'z-10'}`}
+              style={{ ...pos, transform: 'translate(-50%, -50%)' }}
+            >
+              <div 
+                className={`rounded-full flex items-center justify-center text-xs font-bold shadow-md border-2 border-white transition-all
+                  ${isSelected ? 'bg-blue-600 text-white animate-bounce' : 'bg-yellow-500/80 text-slate-900 hover:bg-yellow-400'}
+                `} 
+                style={{ width: size, height: size }}
+              >
+                {loc.count}
+              </div>
+              
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 bg-slate-900/95 backdrop-blur text-white text-xs p-3 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-40 transform scale-95 group-hover:scale-100 origin-bottom">
+                <div className="font-bold border-b border-slate-700 pb-2 mb-2 text-yellow-400 uppercase tracking-wider flex justify-between items-center">
+                  <span>{loc.city || "Lokasi"}</span>
+                  <span className="bg-slate-700 px-1.5 py-0.5 rounded text-[10px] text-white">{loc.count} org</span>
+                </div>
+                <ul className="space-y-1.5 max-h-40 overflow-y-auto">
+                  {loc.people.map((p, i) => (
+                    <li key={i} className="flex items-start">
+                      <div className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-1 mr-2 shrink-0"></div>
+                      <span className="truncate">{p.nama}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+       <div className="mt-2 text-[10px] text-slate-400 text-center italic bg-slate-50 py-1 rounded">
+          *Posisi visual adalah estimasi koordinat dari nama Kota/Provinsi.
+      </div>
+    </div>
+  );
+};
+
+const StatCard = ({ title, value, icon: Icon, color }) => (
+  <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center space-x-4">
+    <div className={`p-3 rounded-lg ${color} bg-opacity-10`}>
+      <Icon className={`w-6 h-6 ${color.replace('bg-', 'text-')}`} />
+    </div>
+    <div>
+      <p className="text-sm text-slate-500 font-medium">{title}</p>
+      <h3 className="text-2xl font-bold text-slate-800">{value}</h3>
+    </div>
+  </div>
+);
+
+const AlumniCard = ({ data, onViewDetail }) => {
+  return (
+    <div className="bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col h-full group">
+      <div className="p-5 flex-1">
+        <div className="flex justify-between items-start mb-4">
+          <div className="flex items-center space-x-3">
+            <div className="w-12 h-12 rounded-full bg-slate-800 text-yellow-500 flex items-center justify-center font-bold text-lg shadow-inner shrink-0">
+              {getInitials(data.nama)}
+            </div>
+            <div className="min-w-0">
+              <h3 className="font-bold text-slate-800 group-hover:text-blue-700 transition-colors truncate">{data.nama}</h3>
+              <p className="text-xs text-slate-500 font-mono truncate">NIM: {data.nim || "-"}</p>
+            </div>
+          </div>
+          <span className={`text-xs px-2 py-1 rounded-full font-medium border whitespace-nowrap ${
+            data.pekerjaan === "Karyawan Swasta" || data.pekerjaan === "Pegawai BUMN/BUMD" 
+            ? "bg-blue-50 text-blue-700 border-blue-100" 
+            : "bg-slate-100 text-slate-600 border-slate-200"
+          }`}>
+            {data.pekerjaan || "Lainnya"}
+          </span>
+        </div>
+
+        <div className="space-y-2 mb-4">
+          <div className="flex items-start text-sm text-slate-600">
+            <Building2 className="w-4 h-4 mr-2 mt-0.5 text-slate-400 shrink-0" />
+            <span className="line-clamp-2">{data.perusahaan || "Freelance / Lainnya"}</span>
+          </div>
+          <div className="flex items-start text-sm text-slate-600">
+            <MapPin className="w-4 h-4 mr-2 mt-0.5 text-slate-400 shrink-0" />
+            <span className="line-clamp-1">{data.kota || "-"}, {data.provinsi || "-"}</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-slate-50 p-3 border-t border-slate-100 flex justify-between items-center gap-2">
+         <a 
+          href={formatWhatsApp(data.hp)} 
+          target="_blank" 
+          rel="noreferrer"
+          className="flex-1 flex items-center justify-center space-x-2 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg text-sm font-medium transition-colors"
+        >
+          <Phone className="w-4 h-4" />
+          <span>WhatsApp</span>
+        </a>
+        <button 
+          onClick={() => onViewDetail(data)}
+          className="px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors"
+        >
+          <ChevronRight className="w-5 h-5" />
+        </button>
+      </div>
+    </div>
+  );
+};
+
+const ModalDetail = ({ isOpen, onClose, data }) => {
+  if (!isOpen || !data) return null;
+
+  return (
+    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200 flex flex-col max-h-[90vh]">
+        <div className="bg-slate-800 p-6 flex justify-between items-start shrink-0">
+          <div className="flex items-center space-x-4">
+            <div className="w-16 h-16 rounded-full bg-yellow-500 text-slate-900 flex items-center justify-center font-bold text-2xl shadow-lg border-2 border-white">
+              {getInitials(data.nama)}
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-white">{data.nama}</h2>
+              <p className="text-yellow-400 text-sm font-medium">{data.pekerjaan}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-6 overflow-y-auto">
+          <div>
+            <div className="flex justify-between items-center mb-3">
+               <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center">
+                <Briefcase className="w-4 h-4 mr-2" /> Informasi Profesional
+              </h3>
+            </div>
+           
+            <div className="grid grid-cols-1 gap-4">
+              <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                <p className="text-xs text-slate-500">Perusahaan / Instansi</p>
+                <p className="font-medium text-slate-800">{data.perusahaan || "-"}</p>
+              </div>
+              <div className="flex gap-4">
+                <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 flex-1">
+                  <p className="text-xs text-slate-500">Bidang</p>
+                  <p className="font-medium text-slate-800">{data.bidang || "-"}</p>
+                </div>
+                 <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 flex-1">
+                  <p className="text-xs text-slate-500">NIM</p>
+                  <p className="font-medium text-slate-800">{data.nim || "-"}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center">
+              <User className="w-4 h-4 mr-2" /> Kontak & Lokasi
+            </h3>
+            <div className="space-y-3">
+               <div className="flex items-center p-2 hover:bg-slate-50 rounded-lg transition-colors">
+                <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-3">
+                  <MapPin className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500">Domisili</p>
+                  <p className="text-sm font-medium text-slate-800">{data.domisili || "-"}</p>
+                  <p className="text-xs text-slate-500">{data.kota || "-"}, {data.provinsi || "-"}</p>
+                </div>
+              </div>
+              
+              <div className="flex items-center p-2 hover:bg-slate-50 rounded-lg transition-colors">
+                <div className="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center mr-3">
+                  <Phone className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500">Nomor HP</p>
+                  <p className="text-sm font-medium text-slate-800">{data.hp || "-"}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center p-2 hover:bg-slate-50 rounded-lg transition-colors">
+                <div className="w-8 h-8 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center mr-3">
+                  <Mail className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500">Email</p>
+                  <p className="text-sm font-medium text-slate-800">{data.email || "-"}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end shrink-0">
+          <button 
+            onClick={onClose}
+            className="px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-100 mr-2"
+          >
+            Tutup
+          </button>
+           <a 
+            href={formatWhatsApp(data.hp)}
+            target="_blank"
+            rel="noreferrer"
+            className="px-4 py-2 bg-slate-800 text-white rounded-lg text-sm font-medium hover:bg-slate-900"
+          >
+            Hubungi
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default function App() {
+  const [alumniData, setAlumniData] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedAlumni, setSelectedAlumni] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [viewMode, setViewMode] = useState('list'); // 'list' or 'map'
+
+  // --- DATA FETCHING ---
+  const fetchData = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(API_URL);
+      const result = await response.json();
+      if (result.status === 'success') {
+        setAlumniData(result.data);
+      }
+    } catch (error) {
+      console.error("Fetch error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  // --- FILTERING ---
+  const filteredData = useMemo(() => {
+    const lowerTerm = searchTerm.toLowerCase();
+    return alumniData.filter(item => 
+      (item.nama && item.nama.toString().toLowerCase().includes(lowerTerm)) ||
+      (item.perusahaan && item.perusahaan.toString().toLowerCase().includes(lowerTerm)) ||
+      (item.provinsi && item.provinsi.toString().toLowerCase().includes(lowerTerm)) ||
+      (item.kota && item.kota.toString().toLowerCase().includes(lowerTerm))
+    );
+  }, [searchTerm, alumniData]);
+
+  // --- STATISTICS ---
+  const stats = useMemo(() => {
+    const total = alumniData.length;
+    const uniqueCompanies = new Set(alumniData.map(d => d.perusahaan).filter(p => p && p !== '-' && p !== '')).size;
+    const uniqueProvinces = new Set(alumniData.map(d => d.provinsi).filter(p => p)).size;
+    const jobTypes = alumniData.reduce((acc, curr) => {
+        const type = (curr.pekerjaan === "Karyawan Swasta" || curr.pekerjaan === "Pegawai BUMN/BUMD") ? "Professional" : "Lainnya";
+        acc[type] = (acc[type] || 0) + 1;
+        return acc;
+    }, {});
+
+    return { total, uniqueCompanies, uniqueProvinces, jobTypes };
+  }, [alumniData]);
+
+  return (
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
+      
+      {/* HEADER */}
+      <header className="bg-slate-900 text-white sticky top-0 z-40 shadow-md">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-yellow-500 rounded flex items-center justify-center">
+               <Building2 className="text-slate-900 w-5 h-5" />
+            </div>
+            <div>
+              <h1 className="font-bold text-lg tracking-tight">SI-ALUMNI <span className="text-yellow-500">MINING '05</span></h1>
+            </div>
+          </div>
+          <div className="flex items-center space-x-3">
+             <div className="hidden sm:flex text-xs text-right mr-2 items-center">
+                <span className={`flex items-center justify-end font-bold mr-3 ${alumniData.length > 0 ? 'text-green-400' : 'text-slate-500'}`}>
+                   <div className={`w-2 h-2 rounded-full mr-1 ${alumniData.length > 0 ? 'bg-green-500 animate-pulse' : 'bg-slate-500'}`}></div> 
+                   {isLoading ? 'Connecting...' : (alumniData.length > 0 ? 'Online' : 'Offline')}
+                </span>
+                <button onClick={fetchData} className="text-slate-400 hover:text-white" title="Refresh Data">
+                   <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+                </button>
+             </div>
+          </div>
+        </div>
+      </header>
+
+      {/* MAIN CONTENT */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        {/* HERO & SEARCH */}
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-slate-800 mb-2">Database Alumni (Live)</h2>
+          <p className="text-slate-500 mb-6">Terhubung langsung ke Google Sheet Angkatan 2005.</p>
+          
+          <div className="flex flex-col sm:flex-row gap-4 max-w-4xl">
+            <div className="relative flex-1">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-slate-400" />
+              </div>
+              <input
+                type="text"
+                className="block w-full pl-10 pr-3 py-4 border border-slate-200 rounded-xl leading-5 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 shadow-sm transition-all"
+                placeholder="Cari nama, perusahaan, atau kota..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            
+            {/* View Switcher */}
+            <div className="flex bg-white p-1 rounded-xl border border-slate-200 shadow-sm shrink-0">
+              <button 
+                onClick={() => setViewMode('list')}
+                className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors ${viewMode === 'list' ? 'bg-slate-800 text-white shadow' : 'text-slate-500 hover:bg-slate-50'}`}
+              >
+                <List className="w-4 h-4 mr-2" /> Daftar
+              </button>
+              <button 
+                onClick={() => setViewMode('map')}
+                className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors ${viewMode === 'map' ? 'bg-slate-800 text-white shadow' : 'text-slate-500 hover:bg-slate-50'}`}
+              >
+                <MapIcon className="w-4 h-4 mr-2" /> Peta Sebaran
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* DASHBOARD STATS */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <StatCard 
+            title="Total Alumni Terdata" 
+            value={isLoading ? "..." : stats.total} 
+            icon={Users} 
+            color="bg-blue-600" 
+          />
+           <StatCard 
+            title="Perusahaan/Instansi" 
+            value={isLoading ? "..." : stats.uniqueCompanies} 
+            icon={Briefcase} 
+            color="bg-yellow-600"
+          />
+           <StatCard 
+            title="Sebaran Provinsi" 
+            value={isLoading ? "..." : stats.uniqueProvinces} 
+            icon={Globe} 
+            color="bg-emerald-600"
+          />
+           <StatCard 
+            title="Profesional Aktif" 
+            value={isLoading ? "..." : (stats.jobTypes['Professional'] || 0)} 
+            icon={BarChart3} 
+            color="bg-purple-600"
+          />
+        </div>
+
+        {/* CONTENT AREA */}
+        {viewMode === 'map' ? (
+           <IndoMap data={filteredData} />
+        ) : (
+           /* LIST VIEW */
+          isLoading && alumniData.length === 0 ? (
+            <div className="text-center py-20">
+              <Loader2 className="w-10 h-10 text-yellow-500 animate-spin mx-auto mb-4" />
+              <p className="text-slate-500">Memuat data dari Google Sheet...</p>
+            </div>
+          ) : filteredData.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredData.map((alumni, index) => (
+                <AlumniCard 
+                  key={index} 
+                  data={alumni} 
+                  onViewDetail={setSelectedAlumni} 
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12 bg-white rounded-xl border border-dashed border-slate-300">
+              <Users className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+              <h3 className="text-lg font-medium text-slate-900">Data Kosong / Tidak Ditemukan</h3>
+              <p className="text-slate-500 mb-4">Silakan cek Google Sheet untuk menambah data.</p>
+            </div>
+          )
+        )}
+
+      </main>
+
+      {/* FOOTER */}
+      <footer className="bg-slate-900 text-slate-400 py-8 mt-12 border-t border-slate-800">
+        <div className="max-w-7xl mx-auto px-4 text-center">
+          <p className="mb-2">&copy; 2025 Paguyuban Alumni Tambang UPNVY Angkatan 2005.</p>
+        </div>
+      </footer>
+
+      {/* MODALS */}
+      <ModalDetail 
+        isOpen={!!selectedAlumni} 
+        data={selectedAlumni} 
+        onClose={() => setSelectedAlumni(null)} 
+      />
+
+    </div>
+  );
+}
