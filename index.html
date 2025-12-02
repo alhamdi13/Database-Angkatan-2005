@@ -14,7 +14,7 @@
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- Leaflet CSS (Peta Interaktif) -->
+    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     
     <!-- Leaflet JS -->
@@ -22,53 +22,24 @@
 
     <style>
         body { font-family: 'Inter', sans-serif; }
-        
-        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #f1f5f9; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-
         .loader {
-            border: 3px solid #f3f3f3;
-            border-radius: 50%;
-            border-top: 3px solid #eab308;
-            width: 24px;
-            height: 24px;
-            animation: spin 1s linear infinite;
+            border: 3px solid #f3f3f3; border-radius: 50%; border-top: 3px solid #eab308;
+            width: 24px; height: 24px; animation: spin 1s linear infinite;
         }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* Marker Custom Style */
-        .custom-div-icon {
-            background: transparent;
-            border: none;
-        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .custom-div-icon { background: transparent; border: none; }
         .marker-pin {
-            width: 30px;
-            height: 30px;
-            border-radius: 50% 50% 50% 0;
-            background: #eab308;
-            position: absolute;
-            transform: rotate(-45deg);
-            left: 50%;
-            top: 50%;
-            margin: -15px 0 0 -15px;
-            box-shadow: 0 3px 5px rgba(0,0,0,0.3);
-            border: 2px solid white;
+            width: 30px; height: 30px; border-radius: 50% 50% 50% 0; background: #eab308;
+            position: absolute; transform: rotate(-45deg); left: 50%; top: 50%;
+            margin: -15px 0 0 -15px; box-shadow: 0 3px 5px rgba(0,0,0,0.3); border: 2px solid white;
         }
         .marker-pin::after {
-            content: '';
-            width: 14px;
-            height: 14px;
-            margin: 6px 0 0 6px;
-            background: #fff;
-            position: absolute;
-            border-radius: 50%;
+            content: ''; width: 14px; height: 14px; margin: 6px 0 0 6px;
+            background: #fff; position: absolute; border-radius: 50%;
         }
         .marker-pin.blue { background: #2563eb; }
     </style>
@@ -113,22 +84,11 @@
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <i data-lucide="search" class="h-5 w-5 text-slate-400"></i>
                     </div>
-                    <input
-                        type="text"
-                        id="search-input"
-                        class="block w-full pl-10 pr-3 py-4 border border-slate-200 rounded-xl leading-5 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 shadow-sm transition-all"
-                        placeholder="Cari nama, perusahaan, atau kota..."
-                    />
+                    <input type="text" id="search-input" class="block w-full pl-10 pr-3 py-4 border border-slate-200 rounded-xl leading-5 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 shadow-sm transition-all" placeholder="Cari nama, perusahaan, atau kota..." />
                 </div>
-                
-                <!-- View Switcher -->
                 <div class="flex bg-white p-1 rounded-xl border border-slate-200 shadow-sm shrink-0">
-                    <button id="btn-list-view" class="flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-slate-800 text-white shadow">
-                        <i data-lucide="list" class="w-4 h-4 mr-2"></i> Daftar
-                    </button>
-                    <button id="btn-map-view" class="flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors text-slate-500 hover:bg-slate-50">
-                        <i data-lucide="map" class="w-4 h-4 mr-2"></i> Peta Sebaran
-                    </button>
+                    <button id="btn-list-view" class="flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-slate-800 text-white shadow"><i data-lucide="list" class="w-4 h-4 mr-2"></i> Daftar</button>
+                    <button id="btn-map-view" class="flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors text-slate-500 hover:bg-slate-50"><i data-lucide="map" class="w-4 h-4 mr-2"></i> Peta Sebaran</button>
                 </div>
             </div>
         </div>
@@ -141,651 +101,351 @@
             </div>
         </div>
 
-        <!-- CONTENT AREA: LIST VIEW -->
+        <!-- LIST VIEW -->
         <div id="list-view-container" class="block">
-            <div id="alumni-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Cards injected via JS -->
-            </div>
+            <div id="alumni-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
             <div id="loading-state" class="text-center py-20">
-                <div class="loader mx-auto mb-4"></div>
-                <p class="text-slate-500">Memuat data dari Google Sheet...</p>
+                <div class="loader mx-auto mb-4"></div><p class="text-slate-500">Memuat data dari Google Sheet...</p>
             </div>
             <div id="empty-state" class="hidden text-center py-12 bg-white rounded-xl border border-dashed border-slate-300">
                 <i data-lucide="users" class="w-12 h-12 text-slate-300 mx-auto mb-3"></i>
                 <h3 class="text-lg font-medium text-slate-900">Data Tidak Ditemukan</h3>
-                <p class="text-slate-500 mb-4">Coba kata kunci pencarian lain.</p>
             </div>
         </div>
 
-        <!-- CONTENT AREA: MAP VIEW -->
+        <!-- MAP VIEW -->
         <div id="map-view-container" class="hidden">
             <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 overflow-hidden relative flex flex-col h-[600px]">
-                
-                <!-- Map Header & Controls -->
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
-                    <div>
-                        <p class="font-bold text-slate-800 text-sm">Peta Sebaran Alumni</p>
-                        <p class="text-xs text-slate-500" id="map-counter">Memuat Peta...</p>
-                    </div>
-
-                    <!-- Filter Dropdown -->
+                    <div><p class="font-bold text-slate-800 text-sm">Peta Sebaran Alumni</p><p class="text-xs text-slate-500" id="map-counter">Memuat Peta...</p></div>
                     <div class="relative z-[1000]"> 
-                        <div class="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
-                            <i data-lucide="filter" class="h-4 w-4 text-slate-400"></i>
-                        </div>
+                        <div class="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none"><i data-lucide="filter" class="h-4 w-4 text-slate-400"></i></div>
                         <select id="map-filter" class="pl-8 pr-8 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-yellow-500 shadow-sm appearance-none cursor-pointer hover:bg-slate-50 transition-colors min-w-[200px]">
-                            <option value="all">Semua Lokasi</option>
-                            <option disabled>──────────</option>
-                            <!-- Options injected via JS -->
+                            <option value="all">Semua Lokasi</option><option disabled>──────────</option>
                         </select>
-                        <div class="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none">
-                            <i data-lucide="chevron-right" class="h-4 w-4 text-slate-400 rotate-90"></i>
-                        </div>
+                        <div class="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none"><i data-lucide="chevron-right" class="h-4 w-4 text-slate-400 rotate-90"></i></div>
                     </div>
                 </div>
-                
-                <!-- Leaflet Map Container -->
                 <div id="leaflet-map" class="w-full flex-1 rounded-lg border border-slate-100 z-0"></div>
-                
-                <div class="mt-2 text-[10px] text-slate-400 text-center italic bg-slate-50 py-1 rounded">
-                    *Peta interaktif powered by OpenStreetMap & LeafletJS.
-                </div>
+                <div class="mt-2 text-[10px] text-slate-400 text-center italic bg-slate-50 py-1 rounded">*Peta interaktif powered by OpenStreetMap & LeafletJS.</div>
             </div>
         </div>
-
     </main>
 
     <!-- FOOTER -->
-    <footer class="bg-slate-900 text-slate-400 py-8 mt-12 border-t border-slate-800">
-        <div class="max-w-7xl mx-auto px-4 text-center">
-            <p class="mb-2">&copy; 2025 Paguyuban Alumni Tambang UPNVY Angkatan 2005.</p>
-        </div>
-    </footer>
+    <footer class="bg-slate-900 text-slate-400 py-8 mt-12 border-t border-slate-800"><div class="max-w-7xl mx-auto px-4 text-center"><p class="mb-2">&copy; 2025 Paguyuban Alumni Tambang UPNVY Angkatan 2005.</p></div></footer>
 
-    <!-- MODAL DETAIL -->
+    <!-- MODAL -->
     <div id="detail-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[2000] flex items-center justify-center p-4 hidden transition-opacity duration-300">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh] transform transition-all scale-95 opacity-0" id="modal-content">
-            <!-- Modal Header -->
             <div class="bg-slate-800 p-6 flex justify-between items-start shrink-0">
                 <div class="flex items-center space-x-4">
-                    <div id="modal-initials" class="w-16 h-16 rounded-full bg-yellow-500 text-slate-900 flex items-center justify-center font-bold text-2xl shadow-lg border-2 border-white">
-                        NN
-                    </div>
-                    <div>
-                        <h2 id="modal-name" class="text-xl font-bold text-white">Nama Alumni</h2>
-                        <p id="modal-job" class="text-yellow-400 text-sm font-medium">Pekerjaan</p>
-                    </div>
+                    <div id="modal-initials" class="w-16 h-16 rounded-full bg-yellow-500 text-slate-900 flex items-center justify-center font-bold text-2xl shadow-lg border-2 border-white">NN</div>
+                    <div><h2 id="modal-name" class="text-xl font-bold text-white">Nama</h2><p id="modal-job" class="text-yellow-400 text-sm font-medium">Pekerjaan</p></div>
                 </div>
-                <button onclick="closeModal()" class="text-slate-400 hover:text-white transition-colors">
-                    <i data-lucide="x" class="w-6 h-6"></i>
-                </button>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
             </div>
-
-            <!-- Modal Body -->
             <div class="p-6 space-y-6 overflow-y-auto">
-                <div>
-                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center">
-                        <i data-lucide="briefcase" class="w-4 h-4 mr-2"></i> Informasi Profesional
-                    </h3>
-                    <div class="grid grid-cols-1 gap-4">
-                        <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                            <p class="text-xs text-slate-500">Perusahaan / Instansi</p>
-                            <p id="modal-company" class="font-medium text-slate-800">-</p>
-                        </div>
-                        <div class="flex gap-4">
-                            <div class="bg-slate-50 p-3 rounded-lg border border-slate-100 flex-1">
-                                <p class="text-xs text-slate-500">Bidang</p>
-                                <p id="modal-field" class="font-medium text-slate-800">-</p>
-                            </div>
-                            <div class="bg-slate-50 p-3 rounded-lg border border-slate-100 flex-1">
-                                <p class="text-xs text-slate-500">NIM</p>
-                                <p id="modal-nim" class="font-medium text-slate-800">-</p>
-                            </div>
-                        </div>
+                <div class="grid grid-cols-1 gap-4">
+                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-100"><p class="text-xs text-slate-500">Perusahaan</p><p id="modal-company" class="font-medium text-slate-800">-</p></div>
+                    <div class="flex gap-4">
+                        <div class="bg-slate-50 p-3 rounded-lg border border-slate-100 flex-1"><p class="text-xs text-slate-500">Bidang</p><p id="modal-field" class="font-medium text-slate-800">-</p></div>
+                        <div class="bg-slate-50 p-3 rounded-lg border border-slate-100 flex-1"><p class="text-xs text-slate-500">NIM</p><p id="modal-nim" class="font-medium text-slate-800">-</p></div>
                     </div>
                 </div>
-
-                <div>
-                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center">
-                        <i data-lucide="user" class="w-4 h-4 mr-2"></i> Kontak & Lokasi
-                    </h3>
-                    <div class="space-y-3">
-                        <div class="flex items-center p-2 hover:bg-slate-50 rounded-lg transition-colors">
-                            <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-3">
-                                <i data-lucide="map-pin" class="w-4 h-4"></i>
-                            </div>
-                            <div>
-                                <p class="text-xs text-slate-500">Domisili</p>
-                                <p id="modal-domicile" class="text-sm font-medium text-slate-800">-</p>
-                                <p id="modal-city" class="text-xs text-slate-500">-</p>
-                            </div>
-                        </div>
-                        
-                        <div class="flex items-center p-2 hover:bg-slate-50 rounded-lg transition-colors">
-                            <div class="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center mr-3">
-                                <i data-lucide="phone" class="w-4 h-4"></i>
-                            </div>
-                            <div>
-                                <p class="text-xs text-slate-500">Nomor HP</p>
-                                <p id="modal-phone" class="text-sm font-medium text-slate-800">-</p>
-                            </div>
-                        </div>
-
-                        <div class="flex items-center p-2 hover:bg-slate-50 rounded-lg transition-colors">
-                            <div class="w-8 h-8 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center mr-3">
-                                <i data-lucide="mail" class="w-4 h-4"></i>
-                            </div>
-                            <div>
-                                <p class="text-xs text-slate-500">Email</p>
-                                <p id="modal-email" class="text-sm font-medium text-slate-800">-</p>
-                            </div>
-                        </div>
-                    </div>
+                <div class="space-y-3">
+                    <div class="flex items-center p-2 hover:bg-slate-50 rounded-lg"><div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-3"><i data-lucide="map-pin" class="w-4 h-4"></i></div><div><p class="text-xs text-slate-500">Domisili</p><p id="modal-domicile" class="text-sm font-medium text-slate-800">-</p><p id="modal-city" class="text-xs text-slate-500">-</p></div></div>
+                    <div class="flex items-center p-2 hover:bg-slate-50 rounded-lg"><div class="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center mr-3"><i data-lucide="phone" class="w-4 h-4"></i></div><div><p class="text-xs text-slate-500">HP</p><p id="modal-phone" class="text-sm font-medium text-slate-800">-</p></div></div>
+                    <div class="flex items-center p-2 hover:bg-slate-50 rounded-lg"><div class="w-8 h-8 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center mr-3"><i data-lucide="mail" class="w-4 h-4"></i></div><div><p class="text-xs text-slate-500">Email</p><p id="modal-email" class="text-sm font-medium text-slate-800">-</p></div></div>
                 </div>
             </div>
-
-            <!-- Modal Footer -->
             <div class="p-4 bg-slate-50 border-t border-slate-100 flex justify-end shrink-0">
-                <button onclick="closeModal()" class="px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-100 mr-2">
-                    Tutup
-                </button>
-                <a id="modal-wa-link" href="#" target="_blank" class="px-4 py-2 bg-slate-800 text-white rounded-lg text-sm font-medium hover:bg-slate-900 flex items-center">
-                    Hubungi
-                </a>
+                <button onclick="closeModal()" class="px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-100 mr-2">Tutup</button>
+                <a id="modal-wa-link" href="#" target="_blank" class="px-4 py-2 bg-slate-800 text-white rounded-lg text-sm font-medium hover:bg-slate-900 flex items-center">Hubungi</a>
             </div>
         </div>
     </div>
 
-    <!-- JAVASCRIPT LOGIC -->
     <script>
-        // --- CONFIG & STATE ---
         const API_URL = "https://script.google.com/macros/s/AKfycbwqI5gOYqGW3rJd1fbMXbWKrnYoxlZ7Clhy5GT-7Z1Co8UuSf97MzE-B25yG8x_VlEn/exec";
-        
-        let alumniData = [];
-        let filteredData = [];
-        let viewMode = 'list';
-        let mapFilterArea = 'all';
-        let mapInstance = null; // Store Leaflet instance
-        let markersLayer = null; // Store marker group
+        let alumniData = [], filteredData = [], viewMode = 'list', mapFilterArea = 'all', mapInstance = null, markersLayer = null;
 
-        // --- COORDINATES DATABASE (Diperluas) ---
-        const CITY_COORDINATES = {
-            "balikpapan": { lat: -1.2379, lng: 116.8529 },
-            "samarinda": { lat: -0.5022, lng: 117.1536 },
-            "sangatta": { lat: 0.5022, lng: 117.5359 },
-            "kutai timur": { lat: 0.6, lng: 117.6 },
-            "tanjung": { lat: -2.1752, lng: 115.3934 },
-            "tabalong": { lat: -2.0, lng: 115.4 },
-            "banjarmasin": { lat: -3.3194, lng: 114.5908 },
-            "pontianak": { lat: -0.0263, lng: 109.3425 },
-            "palangkaraya": { lat: -2.2136, lng: 113.9108 },
-            "ketapang": { lat: -1.85, lng: 109.97 },
-            "jakarta": { lat: -6.2088, lng: 106.8456 },
-            "tangerang": { lat: -6.1702, lng: 106.6403 },
-            "bogor": { lat: -6.5971, lng: 106.8060 },
-            "bekasi": { lat: -6.2383, lng: 106.9756 },
-            "depok": { lat: -6.4025, lng: 106.7942 },
-            "bandung": { lat: -6.9175, lng: 107.6191 },
-            "yogyakarta": { lat: -7.7956, lng: 110.3695 },
-            "sleman": { lat: -7.7, lng: 110.35 },
-            "surabaya": { lat: -7.2575, lng: 112.7521 },
-            "gresik": { lat: -7.15, lng: 112.65 },
-            "palembang": { lat: -2.9761, lng: 104.7754 },
-            "tanjung enim": { lat: -3.75, lng: 103.8 },
-            "lahat": { lat: -3.80, lng: 103.54 },
-            "pangkalpinang": { lat: -2.13, lng: 106.11 },
-            "bangka": { lat: -1.9, lng: 106.0 },
-            "medan": { lat: 3.5952, lng: 98.6722 },
-            "pekanbaru": { lat: 0.5071, lng: 101.4478 },
-            "padang": { lat: -0.9471, lng: 100.4172 },
-            "makassar": { lat: -5.1477, lng: 119.4328 },
-            "manado": { lat: 1.4748, lng: 124.8421 },
-            "kendari": { lat: -3.9973, lng: 122.5151 },
-            "morowali": { lat: -2.6, lng: 121.9 },
-            "palu": { lat: -0.9010, lng: 119.8707 },
-            "sumbawa": { lat: -8.5, lng: 117.4 },
-            "mataram": { lat: -8.5833, lng: 116.1167 },
-            "timika": { lat: -4.5446, lng: 136.8874 },
-            "jayapura": { lat: -2.5, lng: 140.7 },
-            "sorong": { lat: -0.87, lng: 131.25 }
+        // --- DATABASE KOORDINAT LENGKAP (Celah Ditutup) ---
+        const COORDINATES = {
+            // Kalimantan (Tambang Heavy)
+            "balikpapan": { lat: -1.2379, lng: 116.8529 }, "samarinda": { lat: -0.5022, lng: 117.1536 },
+            "sangatta": { lat: 0.5022, lng: 117.5359 }, "kutai timur": { lat: 0.6, lng: 117.6 },
+            "bontang": { lat: 0.1333, lng: 117.5 }, "berau": { lat: 2.15, lng: 117.4 }, "tanjung redeb": { lat: 2.15, lng: 117.4 },
+            "tanjung": { lat: -2.1752, lng: 115.3934 }, "tabalong": { lat: -2.0, lng: 115.4 },
+            "banjarmasin": { lat: -3.3194, lng: 114.5908 }, "banjarbaru": { lat: -3.44, lng: 114.83 },
+            "pontianak": { lat: -0.0263, lng: 109.3425 }, "ketapang": { lat: -1.85, lng: 109.97 },
+            "palangkaraya": { lat: -2.2136, lng: 113.9108 }, "tarakan": { lat: 3.3, lng: 117.63 }, "malinau": { lat: 3.58, lng: 116.63 },
+
+            // Sumatera (Tambang & Minyak)
+            "palembang": { lat: -2.9761, lng: 104.7754 }, "tanjung enim": { lat: -3.75, lng: 103.8 },
+            "muara enim": { lat: -3.65, lng: 103.77 }, "lahat": { lat: -3.80, lng: 103.54 }, "prabumulih": { lat: -3.43, lng: 104.23 },
+            "pangkalpinang": { lat: -2.13, lng: 106.11 }, "bangka": { lat: -1.9, lng: 106.0 }, "belitung": { lat: -2.85, lng: 107.9 },
+            "medan": { lat: 3.5952, lng: 98.6722 }, "pekanbaru": { lat: 0.5071, lng: 101.4478 },
+            "duri": { lat: 1.28, lng: 101.21 }, "dumai": { lat: 1.67, lng: 101.45 },
+            "padang": { lat: -0.9471, lng: 100.4172 }, "jambi": { lat: -1.61, lng: 103.61 },
+            "bengkulu": { lat: -3.80, lng: 102.26 }, "bandar lampung": { lat: -5.45, lng: 105.26 },
+            "batam": { lat: 1.13, lng: 104.05 }, "tanjung pinang": { lat: 0.91, lng: 104.46 },
+
+            // Jawa (Head Office & Asal)
+            "jakarta": { lat: -6.2088, lng: 106.8456 }, "tangerang": { lat: -6.1702, lng: 106.6403 }, "cilegon": { lat: -6.01, lng: 106.05 },
+            "serang": { lat: -6.11, lng: 106.15 }, "bogor": { lat: -6.5971, lng: 106.8060 }, "bekasi": { lat: -6.2383, lng: 106.9756 },
+            "depok": { lat: -6.4025, lng: 106.7942 }, "bandung": { lat: -6.9175, lng: 107.6191 },
+            "semarang": { lat: -6.96, lng: 110.42 }, "solo": { lat: -7.57, lng: 110.82 }, "surakarta": { lat: -7.57, lng: 110.82 },
+            "cilacap": { lat: -7.72, lng: 109.02 }, "kebumen": { lat: -7.67, lng: 109.65 }, "pemalang": { lat: -6.89, lng: 109.38 },
+            "yogyakarta": { lat: -7.7956, lng: 110.3695 }, "sleman": { lat: -7.7, lng: 110.35 },
+            "surabaya": { lat: -7.2575, lng: 112.7521 }, "gresik": { lat: -7.15, lng: 112.65 }, "malang": { lat: -7.96, lng: 112.63 },
+            "banyuwangi": { lat: -8.21, lng: 114.36 },
+
+            // Sulawesi & Timur (Nikel & Emas)
+            "makassar": { lat: -5.1477, lng: 119.4328 }, "manado": { lat: 1.4748, lng: 124.8421 },
+            "kendari": { lat: -3.9973, lng: 122.5151 }, "morowali": { lat: -2.6, lng: 121.9 }, "kolaka": { lat: -4.05, lng: 121.6 },
+            "palu": { lat: -0.9010, lng: 119.8707 }, "sorowako": { lat: -2.5, lng: 121.35 },
+            "mamuju": { lat: -2.67, lng: 118.88 }, "gorontalo": { lat: 0.54, lng: 123.06 },
+            "sumbawa": { lat: -8.5, lng: 117.4 }, "mataram": { lat: -8.5833, lng: 116.1167 }, "kupang": { lat: -10.17, lng: 123.58 },
+            "timika": { lat: -4.5446, lng: 136.8874 }, "jayapura": { lat: -2.5, lng: 140.7 },
+            "sorong": { lat: -0.87, lng: 131.25 }, "ternate": { lat: 0.77, lng: 127.36 }, "weda": { lat: 0.15, lng: 127.9 },
+            "ambon": { lat: -3.69, lng: 128.18 }
         };
 
-        // --- HELPER FUNCTIONS ---
-        // ROBUST: Helper to ensure safe string handling
-        const safeStr = (str) => {
-            if (str === null || str === undefined) return "";
-            return String(str).trim();
-        };
-
+        const safeStr = (str) => (str === null || str === undefined) ? "" : String(str).trim();
         const formatWhatsApp = (phone) => {
-            let cleanPhone = safeStr(phone).replace(/[^0-9]/g, '');
-            if (!cleanPhone) return "#";
-            if (cleanPhone.startsWith('0')) cleanPhone = '62' + cleanPhone.slice(1);
-            return `https://wa.me/${cleanPhone}`;
+            let clean = safeStr(phone).replace(/[^0-9]/g, '');
+            if (!clean) return "#";
+            if (clean.startsWith('0')) clean = '62' + clean.slice(1);
+            return `https://wa.me/${clean}`;
         };
-
         const getInitials = (name) => {
-            const cleanName = safeStr(name);
-            if (!cleanName) return "NN";
-            return cleanName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+            const clean = safeStr(name);
+            if (!clean) return "NN";
+            return clean.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
         };
 
         const getCoordinates = (city, province) => {
             const cleanCity = safeStr(city).toLowerCase();
             const cleanProv = safeStr(province).toLowerCase();
             
-            // Priority 1: Exact City Match
-            for (const [key, value] of Object.entries(CITY_COORDINATES)) {
+            // 1. Cek Kota Spesifik
+            for (const [key, value] of Object.entries(COORDINATES)) {
                 if (cleanCity.includes(key)) return value;
             }
             
-            // Priority 2: Province Fallback (Approximate Center)
-            if (cleanProv.includes('kalimantan timur')) return { lat: 0.5, lng: 116.5 };
-            if (cleanProv.includes('kalimantan selatan')) return { lat: -2.5, lng: 115.5 };
-            if (cleanProv.includes('jawa barat')) return { lat: -6.9, lng: 107.6 };
-            if (cleanProv.includes('jawa timur')) return { lat: -7.5, lng: 112.5 };
-            if (cleanProv.includes('sumatera selatan')) return { lat: -3.3, lng: 104.0 };
-            if (cleanProv.includes('papua')) return { lat: -4.0, lng: 138.0 };
-            if (cleanProv.includes('banten')) return { lat: -6.4, lng: 106.0 };
+            // 2. Fallback Provinsi (Center Points Lengkap se-Indonesia)
+            if (cleanProv.includes('aceh')) return { lat: 4.69, lng: 96.74 };
+            if (cleanProv.includes('sumatera utara')) return { lat: 2.11, lng: 99.54 };
+            if (cleanProv.includes('sumatera barat')) return { lat: -0.73, lng: 100.8 };
+            if (cleanProv.includes('riau')) return { lat: 0.29, lng: 101.70 }; // Fallback Riau selain Pekanbaru/Duri
+            if (cleanProv.includes('jambi')) return { lat: -1.61, lng: 103.61 };
+            if (cleanProv.includes('sumatera selatan')) return { lat: -3.31, lng: 104.17 };
+            if (cleanProv.includes('bengkulu')) return { lat: -3.57, lng: 102.34 };
+            if (cleanProv.includes('lampung')) return { lat: -4.55, lng: 105.40 };
+            if (cleanProv.includes('bangka')) return { lat: -2.74, lng: 106.44 };
+            if (cleanProv.includes('kepulauan riau')) return { lat: 3.94, lng: 108.14 };
+            if (cleanProv.includes('jakarta')) return { lat: -6.20, lng: 106.84 };
+            if (cleanProv.includes('jawa barat')) return { lat: -6.92, lng: 107.60 };
+            if (cleanProv.includes('jawa tengah')) return { lat: -7.15, lng: 110.14 }; // Fallback Jateng selain Semarang/Solo
+            if (cleanProv.includes('yogyakarta')) return { lat: -7.79, lng: 110.36 };
+            if (cleanProv.includes('jawa timur')) return { lat: -7.53, lng: 112.23 };
+            if (cleanProv.includes('banten')) return { lat: -6.40, lng: 106.06 };
+            if (cleanProv.includes('bali')) return { lat: -8.40, lng: 115.18 };
+            if (cleanProv.includes('nusa tenggara barat')) return { lat: -8.65, lng: 117.36 };
+            if (cleanProv.includes('nusa tenggara timur')) return { lat: -8.65, lng: 121.07 };
+            if (cleanProv.includes('kalimantan barat')) return { lat: -0.27, lng: 111.47 };
+            if (cleanProv.includes('kalimantan tengah')) return { lat: -1.68, lng: 113.38 };
+            if (cleanProv.includes('kalimantan selatan')) return { lat: -2.94, lng: 115.37 };
+            if (cleanProv.includes('kalimantan timur')) return { lat: 0.53, lng: 116.41 };
+            if (cleanProv.includes('kalimantan utara')) return { lat: 3.07, lng: 116.04 };
+            if (cleanProv.includes('sulawesi utara')) return { lat: 0.62, lng: 123.97 };
+            if (cleanProv.includes('gorontalo')) return { lat: 0.69, lng: 122.44 };
+            if (cleanProv.includes('sulawesi tengah')) return { lat: -1.43, lng: 121.44 };
+            if (cleanProv.includes('sulawesi barat')) return { lat: -2.84, lng: 119.23 };
+            if (cleanProv.includes('sulawesi selatan')) return { lat: -3.66, lng: 119.97 };
+            if (cleanProv.includes('sulawesi tenggara')) return { lat: -4.14, lng: 122.17 };
+            if (cleanProv.includes('maluku')) return { lat: -3.23, lng: 130.14 };
+            if (cleanProv.includes('papua')) return { lat: -4.26, lng: 138.08 };
             
             return null;
         };
 
-        // --- CORE LOGIC ---
-        
+        // --- FETCH & RENDER ---
         async function fetchData() {
             const refreshIcon = document.getElementById('refresh-icon');
             refreshIcon.classList.add('animate-spin');
             document.getElementById('status-text').innerText = "Connecting...";
             document.getElementById('status-dot').className = "w-2 h-2 rounded-full mr-1 bg-yellow-500 animate-pulse";
-            
             document.getElementById('loading-state').classList.remove('hidden');
             document.getElementById('alumni-grid').innerHTML = '';
-            document.getElementById('empty-state').classList.add('hidden');
-
+            
             try {
                 const response = await fetch(API_URL);
                 const result = await response.json();
-                
                 if (result.status === 'success') {
-                    // ROBUST: Ensure we have an array, even if API sends null
                     alumniData = Array.isArray(result.data) ? result.data : [];
                     filteredData = alumniData;
-                    
-                    renderStats();
-                    renderList();
-                    // Don't render map immediately to save resources, wait for tab switch
-                    
+                    renderStats(); renderList();
                     document.getElementById('status-text').innerText = "Online";
                     document.getElementById('status-text').className = "text-green-500";
                     document.getElementById('status-dot').className = "w-2 h-2 rounded-full mr-1 bg-green-500 animate-pulse";
                     document.getElementById('loading-state').classList.add('hidden');
-                } else {
-                   throw new Error("API reported error");
-                }
+                } else throw new Error("API error");
             } catch (error) {
-                console.error("Fetch error:", error);
+                console.error(error);
                 document.getElementById('status-text').innerText = "Offline";
                 document.getElementById('status-text').className = "text-red-500";
                 document.getElementById('status-dot').className = "w-2 h-2 rounded-full mr-1 bg-red-500";
                 document.getElementById('loading-state').classList.add('hidden');
-                // Show empty state if error, so page isn't broken
                 document.getElementById('empty-state').classList.remove('hidden');
-            } finally {
-                refreshIcon.classList.remove('animate-spin');
-            }
-        }
-
-        function filterData(searchTerm) {
-            const lowerTerm = safeStr(searchTerm).toLowerCase();
-            filteredData = alumniData.filter(item => 
-                safeStr(item.nama).toLowerCase().includes(lowerTerm) ||
-                safeStr(item.perusahaan).toLowerCase().includes(lowerTerm) ||
-                safeStr(item.provinsi).toLowerCase().includes(lowerTerm) ||
-                safeStr(item.kota).toLowerCase().includes(lowerTerm)
-            );
-            
-            renderList();
-            if (viewMode === 'map' && mapInstance) {
-                renderLeafletMarkers();
-            }
-        }
-
-        // --- RENDER FUNCTIONS ---
-
-        function renderStats() {
-            const total = alumniData.length;
-            // ROBUST: Check for existence before accessing properties
-            const uniqueCompanies = new Set(alumniData.map(d => safeStr(d.perusahaan)).filter(p => p && p !== '-' && p !== '')).size;
-            const uniqueProvinces = new Set(alumniData.map(d => safeStr(d.provinsi)).filter(p => p)).size;
-            const jobTypes = alumniData.reduce((acc, curr) => {
-                const job = safeStr(curr.pekerjaan);
-                const type = (job === "Karyawan Swasta" || job === "Pegawai BUMN/BUMD") ? "Professional" : "Lainnya";
-                acc[type] = (acc[type] || 0) + 1;
-                return acc;
-            }, {});
-
-            const statsHtml = `
-                ${createStatCard('Total Alumni', total, 'users', 'bg-blue-600')}
-                ${createStatCard('Perusahaan', uniqueCompanies, 'briefcase', 'bg-yellow-600')}
-                ${createStatCard('Sebaran Provinsi', uniqueProvinces, 'globe', 'bg-emerald-600')}
-                ${createStatCard('Profesional', jobTypes['Professional'] || 0, 'bar-chart-3', 'bg-purple-600')}
-            `;
-            
-            document.getElementById('stats-container').innerHTML = statsHtml;
-            lucide.createIcons();
-        }
-
-        function createStatCard(title, value, icon, colorClass) {
-            const textColor = colorClass.replace('bg-', 'text-');
-            return `
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center space-x-4 transition-transform hover:-translate-y-1 duration-300">
-                <div class="p-3 rounded-lg ${colorClass} bg-opacity-10">
-                    <i data-lucide="${icon}" class="w-6 h-6 ${textColor}"></i>
-                </div>
-                <div>
-                    <p class="text-sm text-slate-500 font-medium">${title}</p>
-                    <h3 class="text-2xl font-bold text-slate-800">${value}</h3>
-                </div>
-            </div>`;
+            } finally { refreshIcon.classList.remove('animate-spin'); }
         }
 
         function renderList() {
             const grid = document.getElementById('alumni-grid');
             grid.innerHTML = '';
-
             if (filteredData.length === 0) {
-                document.getElementById('empty-state').classList.remove('hidden');
-                return;
+                document.getElementById('empty-state').classList.remove('hidden'); return;
             }
             document.getElementById('empty-state').classList.add('hidden');
-
-            filteredData.forEach((alumni, index) => {
-                // ROBUST: Data handling for rendering
+            
+            filteredData.forEach(alumni => {
                 const name = safeStr(alumni.nama) || "Tanpa Nama";
                 const job = safeStr(alumni.pekerjaan) || "Lainnya";
                 const company = safeStr(alumni.perusahaan) || "-";
-                const city = safeStr(alumni.kota) || "-";
-                const province = safeStr(alumni.provinsi) || "-";
-                const nim = safeStr(alumni.nim) || "-";
-                const hp = safeStr(alumni.hp); // Keep raw for check
+                const badge = (job.includes("Karyawan") || job.includes("BUMN")) ? "bg-blue-50 text-blue-700 border-blue-100" : "bg-slate-100 text-slate-600 border-slate-200";
+                const hp = safeStr(alumni.hp);
                 
-                const initials = getInitials(name);
-                const badgeClass = (job === "Karyawan Swasta" || job === "Pegawai BUMN/BUMD") 
-                    ? "bg-blue-50 text-blue-700 border-blue-100" 
-                    : "bg-slate-100 text-slate-600 border-slate-200";
-                
-                const safeAlumni = encodeURIComponent(JSON.stringify(alumni));
-
-                const cardHtml = `
-                <div class="bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col h-full group">
+                const card = `
+                <div class="bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-lg transition-all overflow-hidden flex flex-col h-full">
                     <div class="p-5 flex-1">
                         <div class="flex justify-between items-start mb-4">
                             <div class="flex items-center space-x-3">
-                                <div class="w-12 h-12 rounded-full bg-slate-800 text-yellow-500 flex items-center justify-center font-bold text-lg shadow-inner shrink-0">
-                                    ${initials}
-                                </div>
-                                <div class="min-w-0">
-                                    <h3 class="font-bold text-slate-800 group-hover:text-blue-700 transition-colors truncate">${name}</h3>
-                                    <p class="text-xs text-slate-500 font-mono truncate">NIM: ${nim}</p>
-                                </div>
+                                <div class="w-12 h-12 rounded-full bg-slate-800 text-yellow-500 flex items-center justify-center font-bold text-lg shadow-inner shrink-0">${getInitials(name)}</div>
+                                <div class="min-w-0"><h3 class="font-bold text-slate-800 truncate">${name}</h3><p class="text-xs text-slate-500 font-mono truncate">NIM: ${safeStr(alumni.nim) || "-"}</p></div>
                             </div>
-                            <span class="text-xs px-2 py-1 rounded-full font-medium border whitespace-nowrap ${badgeClass}">
-                                ${job}
-                            </span>
+                            <span class="text-xs px-2 py-1 rounded-full font-medium border whitespace-nowrap ${badge}">${job}</span>
                         </div>
-                        <div class="space-y-2 mb-4">
-                            <div class="flex items-start text-sm text-slate-600">
-                                <i data-lucide="building-2" class="w-4 h-4 mr-2 mt-0.5 text-slate-400 shrink-0"></i>
-                                <span class="line-clamp-2">${company}</span>
-                            </div>
-                            <div class="flex items-start text-sm text-slate-600">
-                                <i data-lucide="map-pin" class="w-4 h-4 mr-2 mt-0.5 text-slate-400 shrink-0"></i>
-                                <span class="line-clamp-1">${city}, ${province}</span>
-                            </div>
+                        <div class="space-y-2 mb-4 text-sm text-slate-600">
+                            <div class="flex items-start"><i data-lucide="building-2" class="w-4 h-4 mr-2 mt-0.5 shrink-0 text-slate-400"></i><span class="line-clamp-2">${company}</span></div>
+                            <div class="flex items-start"><i data-lucide="map-pin" class="w-4 h-4 mr-2 mt-0.5 shrink-0 text-slate-400"></i><span class="line-clamp-1">${safeStr(alumni.kota) || "-"}, ${safeStr(alumni.provinsi) || "-"}</span></div>
                         </div>
                     </div>
-                    <div class="bg-slate-50 p-3 border-t border-slate-100 flex justify-between items-center gap-2">
-                        ${hp ? `
-                        <a href="${formatWhatsApp(hp)}" target="_blank" class="flex-1 flex items-center justify-center space-x-2 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg text-sm font-medium transition-colors">
-                            <i data-lucide="phone" class="w-4 h-4"></i>
-                            <span>WhatsApp</span>
-                        </a>` 
-                        : `
-                        <button disabled class="flex-1 flex items-center justify-center space-x-2 bg-slate-200 text-slate-400 py-2 rounded-lg text-sm font-medium cursor-not-allowed">
-                            <i data-lucide="phone-off" class="w-4 h-4"></i>
-                            <span>No Kontak</span>
-                        </button>`
-                        }
-                        <button onclick="openModal('${safeAlumni}')" class="px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors">
-                            <i data-lucide="chevron-right" class="w-5 h-5"></i>
-                        </button>
+                    <div class="bg-slate-50 p-3 border-t border-slate-100 flex justify-between gap-2">
+                        ${hp ? `<a href="${formatWhatsApp(hp)}" target="_blank" class="flex-1 flex items-center justify-center space-x-2 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg text-sm font-medium"><i data-lucide="phone" class="w-4 h-4"></i><span>WhatsApp</span></a>` : `<button disabled class="flex-1 flex items-center justify-center bg-slate-200 text-slate-400 py-2 rounded-lg text-sm font-medium cursor-not-allowed"><i data-lucide="phone-off" class="w-4 h-4"></i><span>No Kontak</span></button>`}
+                        <button onclick="openModal('${encodeURIComponent(JSON.stringify(alumni))}')" class="px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-100"><i data-lucide="chevron-right" class="w-5 h-5"></i></button>
                     </div>
                 </div>`;
-                grid.insertAdjacentHTML('beforeend', cardHtml);
+                grid.insertAdjacentHTML('beforeend', card);
             });
             lucide.createIcons();
         }
 
-        // --- LEAFLET MAP FUNCTIONS ---
-
-        function initMap() {
-            if (mapInstance) return; // Already init
-
-            // 1. Create Map
-            mapInstance = L.map('leaflet-map').setView([-2.5, 118], 5); // Center on Indonesia
-
-            // 2. Add Tile Layer (OpenStreetMap)
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; OpenStreetMap contributors',
-                maxZoom: 18,
-                minZoom: 4
-            }).addTo(mapInstance);
-
-            // 3. Render Markers
-            renderLeafletMarkers();
-        }
-
+        // --- MAP RENDER (Optimized) ---
         function renderLeafletMarkers() {
-            if (!mapInstance) return;
-            if (markersLayer) markersLayer.clearLayers(); // Clear old markers
+            if (!mapInstance) {
+                mapInstance = L.map('leaflet-map').setView([-2.5, 118], 5);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap', maxZoom: 18, minZoom: 4 }).addTo(mapInstance);
+                markersLayer = L.layerGroup().addTo(mapInstance);
+            } else {
+                markersLayer.clearLayers();
+            }
 
-            markersLayer = L.layerGroup().addTo(mapInstance);
-            
-            // 1. Group Locations
             const locations = {};
-            filteredData.forEach(person => {
-                const city = safeStr(person.kota);
-                const prov = safeStr(person.provinsi);
-                const coords = getCoordinates(city, prov);
-                
+            filteredData.forEach(p => {
+                const coords = getCoordinates(p.kota, p.provinsi);
                 if (coords) {
                     const key = `${coords.lat},${coords.lng}`;
-                    const cityName = city || prov || "Lokasi Tidak Spesifik";
-                    
-                    if (!locations[key]) {
-                        locations[key] = { ...coords, count: 0, people: [], city: cityName };
-                    }
-                    locations[key].count += 1;
-                    locations[key].people.push(person);
+                    const city = safeStr(p.kota) || safeStr(p.provinsi) || "Lokasi";
+                    if (!locations[key]) locations[key] = { ...coords, count: 0, people: [], city };
+                    locations[key].count++; locations[key].people.push(p);
                 }
             });
 
-            // 2. Update Filter Dropdown
-            const filterSelect = document.getElementById('map-filter');
-            // Save current selection
-            const currentSelection = filterSelect.value === 'all' ? mapFilterArea : filterSelect.value;
-            
-            // Rebuild options
-            while (filterSelect.options.length > 2) { filterSelect.remove(2); }
-            const uniqueAreas = [...new Set(Object.values(locations).map(l => l.city))].sort();
-            uniqueAreas.forEach(area => {
-                const opt = document.createElement('option');
-                opt.value = area;
-                opt.text = area;
-                filterSelect.add(opt);
+            // Update Filter
+            const select = document.getElementById('map-filter');
+            const savedVal = select.value === 'all' ? mapFilterArea : select.value;
+            while(select.options.length > 2) select.remove(2);
+            [...new Set(Object.values(locations).map(l=>l.city))].sort().forEach(c => {
+                const opt = document.createElement('option'); opt.value = c; opt.text = c; select.add(opt);
             });
-            // Restore selection if exists in new data
-            if (uniqueAreas.includes(currentSelection)) {
-                filterSelect.value = currentSelection;
-            } else {
-                filterSelect.value = 'all';
-                mapFilterArea = 'all';
-            }
+            if([...select.options].some(o=>o.value===savedVal)) select.value = savedVal; else { select.value='all'; mapFilterArea='all'; }
 
-            // 3. Add Markers to Layer
-            let markerBounds = L.latLngBounds();
-            let hasMarkers = false;
-
+            let bounds = L.latLngBounds(), hasM = false;
             Object.values(locations).forEach(loc => {
-                // Filter Logic
                 if (mapFilterArea !== 'all' && loc.city !== mapFilterArea) return;
-
-                const isSelected = mapFilterArea === loc.city;
-                const count = loc.count;
-                
-                // Custom Icon HTML
-                const iconHtml = `
-                    <div class="marker-pin ${isSelected ? 'blue' : ''}"></div>
-                    <span style="position:absolute; top:-10px; left:0; width:30px; text-align:center; font-weight:bold; font-size:12px; color:#333;">${count}</span>
-                `;
-
-                const customIcon = L.divIcon({
+                const isSel = mapFilterArea === loc.city;
+                const icon = L.divIcon({
                     className: 'custom-div-icon',
-                    html: iconHtml,
-                    iconSize: [30, 42],
-                    iconAnchor: [15, 42]
+                    html: `<div class="marker-pin ${isSel?'blue':''}"></div><span style="position:absolute;top:-10px;left:0;width:30px;text-align:center;font-weight:bold;font-size:12px;">${loc.count}</span>`,
+                    iconSize: [30, 42], iconAnchor: [15, 42]
                 });
-
-                const marker = L.marker([loc.lat, loc.lng], { icon: customIcon });
-
-                // Popup Content
-                const peopleList = loc.people.slice(0, 10).map(p => 
-                    `<li>${safeStr(p.nama)} <span style="color:#666; font-size:0.9em">(${safeStr(p.perusahaan) || '-'})</span></li>`
-                ).join('');
-                
-                const moreText = loc.people.length > 10 ? `<i>+${loc.people.length - 10} lainnya...</i>` : '';
-
-                marker.bindPopup(`
-                    <div style="min-width:200px">
-                        <h3 style="font-weight:bold; margin-bottom:5px; border-bottom:1px solid #ccc; padding-bottom:5px;">${loc.city}</h3>
-                        <ul style="padding-left:15px; margin:0; max-height:150px; overflow-y:auto;">${peopleList}</ul>
-                        ${moreText}
-                    </div>
-                `);
-
-                marker.addTo(markersLayer);
-                markerBounds.extend([loc.lat, loc.lng]);
-                hasMarkers = true;
+                const ppl = loc.people.slice(0,8).map(p=>`<li>${safeStr(p.nama)}</li>`).join('') + (loc.people.length>8?`<i>+${loc.people.length-8}..</i>`:'');
+                L.marker([loc.lat, loc.lng], {icon}).bindPopup(`<b>${loc.city}</b><ul style="padding-left:15px;margin:5px 0">${ppl}</ul>`).addTo(markersLayer);
+                bounds.extend([loc.lat, loc.lng]); hasM = true;
             });
-
-            document.getElementById('map-counter').innerText = `${hasMarkers ? Object.values(locations).filter(l => mapFilterArea === 'all' || l.city === mapFilterArea).length : 0} titik lokasi`;
-
-            // Auto zoom to fit markers
-            if (hasMarkers) {
-                mapInstance.fitBounds(markerBounds, { padding: [50, 50], maxZoom: 10 });
-            } else {
-                mapInstance.setView([-2.5, 118], 5);
-            }
+            
+            document.getElementById('map-counter').innerText = `${hasM ? Object.values(locations).filter(l => mapFilterArea === 'all' || l.city === mapFilterArea).length : 0} titik lokasi`;
+            if (hasM) mapInstance.fitBounds(bounds, { padding: [50,50], maxZoom: 10 }); else mapInstance.setView([-2.5, 118], 5);
         }
 
-        // --- MODAL FUNCTIONS ---
-
-        function openModal(safeAlumniString) {
-            const data = JSON.parse(decodeURIComponent(safeAlumniString));
-            
-            // ROBUST: Populate Modal with Safe Data
-            document.getElementById('modal-initials').innerText = getInitials(data.nama);
-            document.getElementById('modal-name').innerText = safeStr(data.nama) || "Tanpa Nama";
-            document.getElementById('modal-job').innerText = safeStr(data.pekerjaan) || "-";
-            document.getElementById('modal-company').innerText = safeStr(data.perusahaan) || "-";
-            document.getElementById('modal-field').innerText = safeStr(data.bidang) || "-";
-            document.getElementById('modal-nim').innerText = safeStr(data.nim) || "-";
-            document.getElementById('modal-domicile').innerText = safeStr(data.domisili) || "-";
-            document.getElementById('modal-city').innerText = `${safeStr(data.kota) || "-"}, ${safeStr(data.provinsi) || "-"}`;
-            document.getElementById('modal-phone').innerText = safeStr(data.hp) || "-";
-            document.getElementById('modal-email').innerText = safeStr(data.email) || "-";
-            
-            const waBtn = document.getElementById('modal-wa-link');
-            if (data.hp) {
-                waBtn.href = formatWhatsApp(data.hp);
-                waBtn.classList.remove('pointer-events-none', 'opacity-50', 'bg-slate-400');
-                waBtn.classList.add('bg-slate-800', 'hover:bg-slate-900');
-                waBtn.innerText = "Hubungi";
-            } else {
-                waBtn.href = "#";
-                waBtn.classList.add('pointer-events-none', 'opacity-50', 'bg-slate-400');
-                waBtn.classList.remove('bg-slate-800', 'hover:bg-slate-900');
-                waBtn.innerText = "No Kontak";
-            }
-
-            // Show Modal with Animation
-            const modal = document.getElementById('detail-modal');
-            const content = document.getElementById('modal-content');
-            modal.classList.remove('hidden');
-            setTimeout(() => {
-                modal.classList.remove('opacity-0');
-                content.classList.remove('scale-95', 'opacity-0');
-                content.classList.add('scale-100', 'opacity-100');
-            }, 10);
+        // --- STATS & EVENTS ---
+        function renderStats() {
+            const stats = { total: alumniData.length, companies: new Set(alumniData.map(d=>d.perusahaan).filter(x=>x&&x.length>2)).size, prov: new Set(alumniData.map(d=>d.provinsi).filter(x=>x)).size, pro: alumniData.filter(d=>(d.pekerjaan||"").match(/Karyawan|BUMN/)).length };
+            document.getElementById('stats-container').innerHTML = `
+                ${statCard('Total Alumni', stats.total, 'users', 'bg-blue-600')}
+                ${statCard('Perusahaan', stats.companies, 'briefcase', 'bg-yellow-600')}
+                ${statCard('Sebaran Provinsi', stats.prov, 'globe', 'bg-emerald-600')}
+                ${statCard('Profesional', stats.pro, 'bar-chart-3', 'bg-purple-600')}
+            `;
+            lucide.createIcons();
         }
+        const statCard = (t,v,i,c) => `<div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center space-x-4"><div class="p-3 rounded-lg ${c} bg-opacity-10"><i data-lucide="${i}" class="w-6 h-6 ${c.replace('bg-','text-')}"></i></div><div><p class="text-sm text-slate-500 font-medium">${t}</p><h3 class="text-2xl font-bold text-slate-800">${v}</h3></div></div>`;
 
-        function closeModal() {
-            const modal = document.getElementById('detail-modal');
-            const content = document.getElementById('modal-content');
-            
-            modal.classList.add('opacity-0');
-            content.classList.add('scale-95', 'opacity-0');
-            content.classList.remove('scale-100', 'opacity-100');
-            
-            setTimeout(() => {
-                modal.classList.add('hidden');
-            }, 300);
-        }
-
-        // --- EVENT LISTENERS ---
-
-        document.getElementById('search-input').addEventListener('input', (e) => {
-            filterData(e.target.value);
+        // Event Listeners
+        document.getElementById('search-input').addEventListener('input', (e) => { filterData(e.target.value); });
+        document.getElementById('btn-map-view').addEventListener('click', () => {
+            viewMode='map'; document.getElementById('list-view-container').classList.add('hidden'); document.getElementById('map-view-container').classList.remove('hidden');
+            document.getElementById('btn-map-view').className = "flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-slate-800 text-white shadow";
+            document.getElementById('btn-list-view').className = "flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors text-slate-500 hover:bg-slate-50";
+            setTimeout(() => { renderLeafletMarkers(); mapInstance.invalidateSize(); }, 100);
         });
-
         document.getElementById('btn-list-view').addEventListener('click', () => {
-            viewMode = 'list';
-            document.getElementById('list-view-container').classList.remove('hidden');
-            document.getElementById('map-view-container').classList.add('hidden');
-            
+            viewMode='list'; document.getElementById('list-view-container').classList.remove('hidden'); document.getElementById('map-view-container').classList.add('hidden');
             document.getElementById('btn-list-view').className = "flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-slate-800 text-white shadow";
             document.getElementById('btn-map-view').className = "flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors text-slate-500 hover:bg-slate-50";
         });
-
-        document.getElementById('btn-map-view').addEventListener('click', () => {
-            viewMode = 'map';
-            document.getElementById('list-view-container').classList.add('hidden');
-            document.getElementById('map-view-container').classList.remove('hidden');
-
-            document.getElementById('btn-map-view').className = "flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-slate-800 text-white shadow";
-            document.getElementById('btn-list-view').className = "flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors text-slate-500 hover:bg-slate-50";
+        document.getElementById('map-filter').addEventListener('change', (e) => { mapFilterArea = e.target.value; renderLeafletMarkers(); });
+        
+        // Modal Logic
+        function openModal(dataStr) {
+            const d = JSON.parse(decodeURIComponent(dataStr));
+            document.getElementById('modal-initials').innerText = getInitials(d.nama);
+            document.getElementById('modal-name').innerText = safeStr(d.nama);
+            document.getElementById('modal-job').innerText = safeStr(d.pekerjaan);
+            document.getElementById('modal-company').innerText = safeStr(d.perusahaan) || "-";
+            document.getElementById('modal-field').innerText = safeStr(d.bidang) || "-";
+            document.getElementById('modal-nim').innerText = safeStr(d.nim) || "-";
+            document.getElementById('modal-domicile').innerText = safeStr(d.domisili) || "-";
+            document.getElementById('modal-city').innerText = `${safeStr(d.kota) || "-"}, ${safeStr(d.provinsi) || "-"}`;
+            document.getElementById('modal-phone').innerText = safeStr(d.hp) || "-";
+            document.getElementById('modal-email').innerText = safeStr(d.email) || "-";
             
-            // Init map if first time, needs a slight delay for container to be visible
-            setTimeout(() => {
-                initMap();
-                mapInstance.invalidateSize(); // Fix gray map issue
-            }, 100);
-        });
+            const btn = document.getElementById('modal-wa-link');
+            if(d.hp) { btn.href=formatWhatsApp(d.hp); btn.classList.remove('bg-slate-200','text-slate-400','cursor-not-allowed'); btn.classList.add('bg-slate-800','text-white','hover:bg-slate-900'); btn.innerText='Hubungi'; }
+            else { btn.href='#'; btn.classList.add('bg-slate-200','text-slate-400','cursor-not-allowed'); btn.classList.remove('bg-slate-800','text-white','hover:bg-slate-900'); btn.innerText='No Kontak'; }
 
-        document.getElementById('map-filter').addEventListener('change', (e) => {
-            mapFilterArea = e.target.value;
-            renderLeafletMarkers();
-        });
+            const m = document.getElementById('detail-modal'); m.classList.remove('hidden');
+            setTimeout(()=> { m.classList.remove('opacity-0'); document.getElementById('modal-content').classList.remove('scale-95','opacity-0'); },10);
+        }
+        function closeModal() {
+            const m = document.getElementById('detail-modal'); m.classList.add('opacity-0'); document.getElementById('modal-content').classList.add('scale-95','opacity-0');
+            setTimeout(()=>m.classList.add('hidden'), 300);
+        }
+        document.getElementById('detail-modal').addEventListener('click', (e) => { if(e.target.id==='detail-modal') closeModal(); });
 
-        document.getElementById('detail-modal').addEventListener('click', (e) => {
-            if (e.target.id === 'detail-modal') closeModal();
-        });
-
-        // INIT
-        lucide.createIcons();
-        fetchData();
-
+        fetchData(); lucide.createIcons();
     </script>
 </body>
 </html>
