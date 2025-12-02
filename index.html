@@ -284,9 +284,25 @@
                 const response = await fetch(API_URL);
                 const result = await response.json();
                 if (result.status === 'success') {
-                    alumniData = Array.isArray(result.data) ? result.data : [];
+                    // ROBUST: Ensure we have an array, even if API sends null
+                    const rawData = Array.isArray(result.data) ? result.data : [];
+                    
+                    // --- AUTO-CORRECTION: SWAP NIM & EMAIL ---
+                    // Cek cerdas: Jika kolom NIM mengandung '@' tapi Email tidak,
+                    // berarti datanya tertukar. Kita tukar balik otomatis.
+                    alumniData = rawData.map(d => {
+                        const n = safeStr(d.nim);
+                        const e = safeStr(d.email);
+                        // Logika deteksi tertukar
+                        if (n.includes('@') && !e.includes('@')) {
+                            return { ...d, nim: e, email: n }; // Tukar balik
+                        }
+                        return d;
+                    });
+
                     filteredData = alumniData;
                     renderStats(); renderList();
+                    
                     document.getElementById('status-text').innerText = "Online";
                     document.getElementById('status-text').className = "text-green-500";
                     document.getElementById('status-dot').className = "w-2 h-2 rounded-full mr-1 bg-green-500 animate-pulse";
