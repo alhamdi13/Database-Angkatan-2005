@@ -70,7 +70,6 @@
             position: absolute;
             border-radius: 50%;
         }
-        /* Color variants for marker */
         .marker-pin.blue { background: #2563eb; }
     </style>
 </head>
@@ -352,21 +351,28 @@
         };
 
         // --- HELPER FUNCTIONS ---
+        // ROBUST: Helper to ensure safe string handling
+        const safeStr = (str) => {
+            if (str === null || str === undefined) return "";
+            return String(str).trim();
+        };
+
         const formatWhatsApp = (phone) => {
-            if (!phone) return "#";
-            let cleanPhone = phone.toString().replace(/[^0-9]/g, '');
+            let cleanPhone = safeStr(phone).replace(/[^0-9]/g, '');
+            if (!cleanPhone) return "#";
             if (cleanPhone.startsWith('0')) cleanPhone = '62' + cleanPhone.slice(1);
             return `https://wa.me/${cleanPhone}`;
         };
 
         const getInitials = (name) => {
-            if (!name) return "NN";
-            return name.toString().split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+            const cleanName = safeStr(name);
+            if (!cleanName) return "NN";
+            return cleanName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
         };
 
         const getCoordinates = (city, province) => {
-            const cleanCity = city?.toString().toLowerCase().trim() || "";
-            const cleanProv = province?.toString().toLowerCase().trim() || "";
+            const cleanCity = safeStr(city).toLowerCase();
+            const cleanProv = safeStr(province).toLowerCase();
             
             // Priority 1: Exact City Match
             for (const [key, value] of Object.entries(CITY_COORDINATES)) {
@@ -402,7 +408,8 @@
                 const result = await response.json();
                 
                 if (result.status === 'success') {
-                    alumniData = result.data;
+                    // ROBUST: Ensure we have an array, even if API sends null
+                    alumniData = Array.isArray(result.data) ? result.data : [];
                     filteredData = alumniData;
                     
                     renderStats();
@@ -413,24 +420,29 @@
                     document.getElementById('status-text').className = "text-green-500";
                     document.getElementById('status-dot').className = "w-2 h-2 rounded-full mr-1 bg-green-500 animate-pulse";
                     document.getElementById('loading-state').classList.add('hidden');
+                } else {
+                   throw new Error("API reported error");
                 }
             } catch (error) {
                 console.error("Fetch error:", error);
                 document.getElementById('status-text').innerText = "Offline";
                 document.getElementById('status-text').className = "text-red-500";
                 document.getElementById('status-dot').className = "w-2 h-2 rounded-full mr-1 bg-red-500";
+                document.getElementById('loading-state').classList.add('hidden');
+                // Show empty state if error, so page isn't broken
+                document.getElementById('empty-state').classList.remove('hidden');
             } finally {
                 refreshIcon.classList.remove('animate-spin');
             }
         }
 
         function filterData(searchTerm) {
-            const lowerTerm = searchTerm.toLowerCase();
+            const lowerTerm = safeStr(searchTerm).toLowerCase();
             filteredData = alumniData.filter(item => 
-                (item.nama && item.nama.toString().toLowerCase().includes(lowerTerm)) ||
-                (item.perusahaan && item.perusahaan.toString().toLowerCase().includes(lowerTerm)) ||
-                (item.provinsi && item.provinsi.toString().toLowerCase().includes(lowerTerm)) ||
-                (item.kota && item.kota.toString().toLowerCase().includes(lowerTerm))
+                safeStr(item.nama).toLowerCase().includes(lowerTerm) ||
+                safeStr(item.perusahaan).toLowerCase().includes(lowerTerm) ||
+                safeStr(item.provinsi).toLowerCase().includes(lowerTerm) ||
+                safeStr(item.kota).toLowerCase().includes(lowerTerm)
             );
             
             renderList();
@@ -443,10 +455,12 @@
 
         function renderStats() {
             const total = alumniData.length;
-            const uniqueCompanies = new Set(alumniData.map(d => d.perusahaan).filter(p => p && p !== '-' && p !== '')).size;
-            const uniqueProvinces = new Set(alumniData.map(d => d.provinsi).filter(p => p)).size;
+            // ROBUST: Check for existence before accessing properties
+            const uniqueCompanies = new Set(alumniData.map(d => safeStr(d.perusahaan)).filter(p => p && p !== '-' && p !== '')).size;
+            const uniqueProvinces = new Set(alumniData.map(d => safeStr(d.provinsi)).filter(p => p)).size;
             const jobTypes = alumniData.reduce((acc, curr) => {
-                const type = (curr.pekerjaan === "Karyawan Swasta" || curr.pekerjaan === "Pegawai BUMN/BUMD") ? "Professional" : "Lainnya";
+                const job = safeStr(curr.pekerjaan);
+                const type = (job === "Karyawan Swasta" || job === "Pegawai BUMN/BUMD") ? "Professional" : "Lainnya";
                 acc[type] = (acc[type] || 0) + 1;
                 return acc;
             }, {});
@@ -487,8 +501,17 @@
             document.getElementById('empty-state').classList.add('hidden');
 
             filteredData.forEach((alumni, index) => {
-                const initials = getInitials(alumni.nama);
-                const badgeClass = (alumni.pekerjaan === "Karyawan Swasta" || alumni.pekerjaan === "Pegawai BUMN/BUMD") 
+                // ROBUST: Data handling for rendering
+                const name = safeStr(alumni.nama) || "Tanpa Nama";
+                const job = safeStr(alumni.pekerjaan) || "Lainnya";
+                const company = safeStr(alumni.perusahaan) || "-";
+                const city = safeStr(alumni.kota) || "-";
+                const province = safeStr(alumni.provinsi) || "-";
+                const nim = safeStr(alumni.nim) || "-";
+                const hp = safeStr(alumni.hp); // Keep raw for check
+                
+                const initials = getInitials(name);
+                const badgeClass = (job === "Karyawan Swasta" || job === "Pegawai BUMN/BUMD") 
                     ? "bg-blue-50 text-blue-700 border-blue-100" 
                     : "bg-slate-100 text-slate-600 border-slate-200";
                 
@@ -503,30 +526,37 @@
                                     ${initials}
                                 </div>
                                 <div class="min-w-0">
-                                    <h3 class="font-bold text-slate-800 group-hover:text-blue-700 transition-colors truncate">${alumni.nama}</h3>
-                                    <p class="text-xs text-slate-500 font-mono truncate">NIM: ${alumni.nim || "-"}</p>
+                                    <h3 class="font-bold text-slate-800 group-hover:text-blue-700 transition-colors truncate">${name}</h3>
+                                    <p class="text-xs text-slate-500 font-mono truncate">NIM: ${nim}</p>
                                 </div>
                             </div>
                             <span class="text-xs px-2 py-1 rounded-full font-medium border whitespace-nowrap ${badgeClass}">
-                                ${alumni.pekerjaan || "Lainnya"}
+                                ${job}
                             </span>
                         </div>
                         <div class="space-y-2 mb-4">
                             <div class="flex items-start text-sm text-slate-600">
                                 <i data-lucide="building-2" class="w-4 h-4 mr-2 mt-0.5 text-slate-400 shrink-0"></i>
-                                <span class="line-clamp-2">${alumni.perusahaan || "Freelance / Lainnya"}</span>
+                                <span class="line-clamp-2">${company}</span>
                             </div>
                             <div class="flex items-start text-sm text-slate-600">
                                 <i data-lucide="map-pin" class="w-4 h-4 mr-2 mt-0.5 text-slate-400 shrink-0"></i>
-                                <span class="line-clamp-1">${alumni.kota || "-"}, ${alumni.provinsi || "-"}</span>
+                                <span class="line-clamp-1">${city}, ${province}</span>
                             </div>
                         </div>
                     </div>
                     <div class="bg-slate-50 p-3 border-t border-slate-100 flex justify-between items-center gap-2">
-                        <a href="${formatWhatsApp(alumni.hp)}" target="_blank" class="flex-1 flex items-center justify-center space-x-2 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg text-sm font-medium transition-colors">
+                        ${hp ? `
+                        <a href="${formatWhatsApp(hp)}" target="_blank" class="flex-1 flex items-center justify-center space-x-2 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg text-sm font-medium transition-colors">
                             <i data-lucide="phone" class="w-4 h-4"></i>
                             <span>WhatsApp</span>
-                        </a>
+                        </a>` 
+                        : `
+                        <button disabled class="flex-1 flex items-center justify-center space-x-2 bg-slate-200 text-slate-400 py-2 rounded-lg text-sm font-medium cursor-not-allowed">
+                            <i data-lucide="phone-off" class="w-4 h-4"></i>
+                            <span>No Kontak</span>
+                        </button>`
+                        }
                         <button onclick="openModal('${safeAlumni}')" class="px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors">
                             <i data-lucide="chevron-right" class="w-5 h-5"></i>
                         </button>
@@ -565,11 +595,16 @@
             // 1. Group Locations
             const locations = {};
             filteredData.forEach(person => {
-                const coords = getCoordinates(person.kota, person.provinsi);
+                const city = safeStr(person.kota);
+                const prov = safeStr(person.provinsi);
+                const coords = getCoordinates(city, prov);
+                
                 if (coords) {
                     const key = `${coords.lat},${coords.lng}`;
+                    const cityName = city || prov || "Lokasi Tidak Spesifik";
+                    
                     if (!locations[key]) {
-                        locations[key] = { ...coords, count: 0, people: [], city: person.kota || person.provinsi };
+                        locations[key] = { ...coords, count: 0, people: [], city: cityName };
                     }
                     locations[key].count += 1;
                     locations[key].people.push(person);
@@ -626,7 +661,7 @@
 
                 // Popup Content
                 const peopleList = loc.people.slice(0, 10).map(p => 
-                    `<li>${p.nama} <span style="color:#666; font-size:0.9em">(${p.perusahaan || '-'})</span></li>`
+                    `<li>${safeStr(p.nama)} <span style="color:#666; font-size:0.9em">(${safeStr(p.perusahaan) || '-'})</span></li>`
                 ).join('');
                 
                 const moreText = loc.people.length > 10 ? `<i>+${loc.people.length - 10} lainnya...</i>` : '';
@@ -659,18 +694,30 @@
         function openModal(safeAlumniString) {
             const data = JSON.parse(decodeURIComponent(safeAlumniString));
             
-            // Populate Modal
+            // ROBUST: Populate Modal with Safe Data
             document.getElementById('modal-initials').innerText = getInitials(data.nama);
-            document.getElementById('modal-name').innerText = data.nama;
-            document.getElementById('modal-job').innerText = data.pekerjaan || "-";
-            document.getElementById('modal-company').innerText = data.perusahaan || "-";
-            document.getElementById('modal-field').innerText = data.bidang || "-";
-            document.getElementById('modal-nim').innerText = data.nim || "-";
-            document.getElementById('modal-domicile').innerText = data.domisili || "-";
-            document.getElementById('modal-city').innerText = `${data.kota || "-"}, ${data.provinsi || "-"}`;
-            document.getElementById('modal-phone').innerText = data.hp || "-";
-            document.getElementById('modal-email').innerText = data.email || "-";
-            document.getElementById('modal-wa-link').href = formatWhatsApp(data.hp);
+            document.getElementById('modal-name').innerText = safeStr(data.nama) || "Tanpa Nama";
+            document.getElementById('modal-job').innerText = safeStr(data.pekerjaan) || "-";
+            document.getElementById('modal-company').innerText = safeStr(data.perusahaan) || "-";
+            document.getElementById('modal-field').innerText = safeStr(data.bidang) || "-";
+            document.getElementById('modal-nim').innerText = safeStr(data.nim) || "-";
+            document.getElementById('modal-domicile').innerText = safeStr(data.domisili) || "-";
+            document.getElementById('modal-city').innerText = `${safeStr(data.kota) || "-"}, ${safeStr(data.provinsi) || "-"}`;
+            document.getElementById('modal-phone').innerText = safeStr(data.hp) || "-";
+            document.getElementById('modal-email').innerText = safeStr(data.email) || "-";
+            
+            const waBtn = document.getElementById('modal-wa-link');
+            if (data.hp) {
+                waBtn.href = formatWhatsApp(data.hp);
+                waBtn.classList.remove('pointer-events-none', 'opacity-50', 'bg-slate-400');
+                waBtn.classList.add('bg-slate-800', 'hover:bg-slate-900');
+                waBtn.innerText = "Hubungi";
+            } else {
+                waBtn.href = "#";
+                waBtn.classList.add('pointer-events-none', 'opacity-50', 'bg-slate-400');
+                waBtn.classList.remove('bg-slate-800', 'hover:bg-slate-900');
+                waBtn.innerText = "No Kontak";
+            }
 
             // Show Modal with Animation
             const modal = document.getElementById('detail-modal');
